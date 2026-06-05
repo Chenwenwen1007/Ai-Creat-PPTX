@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Ai-Creat-PPTX Logo](public/images/logo.png)
+<img src="public/images/logo.png" alt="Ai-Creat-PPTX Logo" width="150">
 
 **基于 AI 技术的智能 PPT 生成器**
 
@@ -56,18 +56,6 @@ Ai-Creat-PPTX 是一款基于 AI 大语言模型的智能 PPT 生成 Web 应用�
 ### 🔒 隐私安全
 - **本地 API 配置** — API Key 存储在浏览器 localStorage，不上传服务器
 - **无后端依赖** — 纯前端应用，数据完全本地处理
-
----
-
-## 设计理念 — Polanyi 默会知识理论
-
-本项目融入了迈克尔·波兰尼（Michael Polanyi）的默会知识（Tacit Knowledge）理论：
-
-| 设计原则 | 实现方式 |
-|---------|---------|
-| **环境暗示** | 渐变背景氛围营造沉浸感，引导用户进入创作状态 |
-| **身体化认知** | 直觉式排版布局，功能卡片直觉感知，降低学习成本 |
-| **行动优先** | 按钮引导而非文字说明，通过操作探索功能 |
 
 ---
 
