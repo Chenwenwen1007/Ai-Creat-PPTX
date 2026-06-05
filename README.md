@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![AI PPT Generator](https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=AI%20powered%20PPT%20generator%20dashboard%20with%20modern%20UI%20showing%20presentation%20slides%2C%20dark%20blue%20gradient%20background%2C%20futuristic%20tech%20style&image_size=landscape_16_9)
+![Ai-Creat-PPTX Logo](public/images/logo.png)
 
 **基于 AI 技术的智能 PPT 生成器**
 
@@ -17,6 +17,18 @@
 Ai-Creat-PPTX 是一款基于 AI 大语言模型的智能 PPT 生成 Web 应用。用户只需输入主题，系统即可自动生成结构化大纲、选择精美模板、一键生成专业 PPTX 文件。
 
 本项目采用 **本地 API 配置** 方案，无需部署后端服务，用户在浏览器端配置自己的 AI API Key 即可使用，保护隐私且灵活便捷。
+
+---
+
+## 项目预览
+
+### 🌙 暗色模式
+
+![暗色模式预览](resources/screenshots/dark-mode.png)
+
+### ☀️ 亮色模式
+
+![亮色模式预览](resources/screenshots/light-mode.png)
 
 ---
 
