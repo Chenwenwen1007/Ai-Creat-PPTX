@@ -6,13 +6,14 @@ import { Ppt2Svg } from 'src/functions/AiPPTX/ppt2svg'
 import { Ppt2Canvas } from 'src/functions/AiPPTX/ppt2canvas'
 import { BackendApi } from './Config'
 import { getRequestToken, getCustomApiHeaders, getLocalConfig } from './LocalConfig'
+import { exportPptx as exportPythonPptx } from 'src/api/pythonApi'
 
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Grid'
 import Typography from '@mui/material/Grid'
 import Grid from '@mui/material/Grid'
 
-import { Download, SwapHoriz, ChangeCircle, Image, Description, PictureAsPdf } from '@mui/icons-material'
+import { Download, SwapHoriz, ChangeCircle, Image, Description, PictureAsPdf, InsertDriveFile } from '@mui/icons-material'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import ListItemIcon from '@mui/material/ListItemIcon'
@@ -415,12 +416,36 @@ p { font-size: 12pt; color: #666; margin: 8px 0; text-indent: 2em; }
   }
 
   /**
-   * 导出为 PPTX（使用 officegen 或图片拼接方案）
-   * 当前实现：导出为包含所有幻灯片图片的 ZIP
+   * 导出为真正的 PPTX 文件
+   * 优先调用 Python 后端生成原生 PPTX
    */
   const exportAsPptx = async () => {
-      // 由于浏览器端无法直接生成真正的 PPTX 文件
-      // 我们导出为 ZIP 图片包，并附带说明
+      // 如果有 Python 后端 projectId，调用后端生成真正的 PPTX
+      if (inputData.projectId) {
+          setDescMsg('正在导出 PPTX...')
+          setGeneratePptxStatus(true)
+          try {
+              const blob = await exportPythonPptx(inputData.projectId)
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `${inputData.subject || 'presentation'}.pptx`
+              document.body.appendChild(a)
+              a.click()
+              document.body.removeChild(a)
+              URL.revokeObjectURL(url)
+          } catch (error: any) {
+              console.error('PPTX 导出失败', error)
+              alert('PPTX 导出失败: ' + (error.message || '请检查后端服务是否运行'))
+          } finally {
+              setGeneratePptxStatus(false)
+              setDescMsg('正在生成中，请稍后...')
+          }
+          return
+      }
+
+      // 如果没有 projectId，回退到图片 ZIP 导出
+      alert('PPTX 导出需要完整的后端工作流。请先通过设计规范步骤生成 PPT，或导出为图片 ZIP。')
       await exportAsImageZip()
   }
 
@@ -661,8 +686,8 @@ p { font-size: 12pt; color: #666; margin: 8px 0; text-indent: 2em; }
                         <ListItemText primary="导出为图片 ZIP" secondary="高清 PNG 图片打包" />
                       </MenuItem>
                       <MenuItem onClick={() => handleDownload('pptx')}>
-                        <ListItemIcon><PictureAsPdf fontSize="small" /></ListItemIcon>
-                        <ListItemText primary="导出为 PPTX" secondary="幻灯片图片合集" />
+                        <ListItemIcon><InsertDriveFile fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="导出为 PPTX" secondary="原生可编辑 PowerPoint" />
                       </MenuItem>
                       <MenuItem onClick={() => handleDownload('docx')}>
                         <ListItemIcon><Description fontSize="small" /></ListItemIcon>

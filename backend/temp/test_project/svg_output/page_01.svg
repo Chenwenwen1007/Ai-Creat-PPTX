@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#0B3D91"/>
+  <text x="640" y="300" text-anchor="middle" fill="white" font-size="48" font-family="Microsoft YaHei">测试标题</text>
+  <text x="640" y="380" text-anchor="middle" fill="#E0E0E0" font-size="24" font-family="Microsoft YaHei">副标题内容</text>
+</svg>

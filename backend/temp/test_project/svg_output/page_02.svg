@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#1B5E20"/>
+  <text x="80" y="80" fill="white" font-size="36" font-family="Microsoft YaHei">第一页内容</text>
+  <text x="80" y="140" fill="#E0E0E0" font-size="18" font-family="Microsoft YaHei">要点 1</text>
+  <text x="80" y="180" fill="#E0E0E0" font-size="18" font-family="Microsoft YaHei">要点 2</text>
+</svg>

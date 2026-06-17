@@ -477,8 +477,8 @@ backend/app/templates/
 | 3.2 | 前端设计规范确认界面 | ✅ 已完成 | Phase 3 |
 | 3.3 | 实现 Executor（SVG 生成） | ✅ 已完成 | Phase 3 |
 | 3.4 | 实现 SVG 质量检查 | ✅ 已完成 | Phase 3 |
-| 4.1 | 实现 SVG 转 PPTX（核心） | ⬜ 未完成 | Phase 4 |
-| 4.2 | 前端下载 PPTX 功能 | ⬜ 未完成 | Phase 4 |
+| 4.1 | 实现 SVG 转 PPTX（核心） | ✅ 已完成 | Phase 4 |
+| 4.2 | 前端下载 PPTX 功能 | ✅ 已完成 | Phase 4 |
 | 5.1 | 三级模板架构设计 | ⬜ 未完成 | Phase 5 |
 | 5.2 | 模板预览图生成 | ⬜ 未完成 | Phase 5 |
 | 6.1 | 重构前端 API 调用层 | ⬜ 未完成 | Phase 6 |

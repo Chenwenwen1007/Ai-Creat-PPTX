@@ -180,28 +180,39 @@ export async function generatePptStream(params: {
 }
 
 /**
- * 导出 PPTX
+ * 导出 PPTX（返回 Blob）
  * @param projectId 项目标识
  */
-export async function exportPptx(projectId: string) {
+export async function exportPptx(projectId: string): Promise<Blob> {
   const formData = new FormData()
   formData.append('project_id', projectId)
-  
+
   const response = await fetch(`${PYTHON_API_BASE}/export/pptx`, {
     method: 'POST',
     body: formData
   })
-  
-  return response
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: '导出失败' }))
+    throw new Error(errorData.detail || `HTTP ${response.status}`)
+  }
+
+  return response.blob()
 }
 
 /**
- * 下载 PPTX 文件
+ * 下载 PPTX 文件（返回 Blob）
  * @param projectId 项目标识
  */
-export async function downloadPptx(projectId: string) {
+export async function downloadPptx(projectId: string): Promise<Blob> {
   const response = await fetch(`${PYTHON_API_BASE}/download/${projectId}`)
-  return response
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: '下载失败' }))
+    throw new Error(errorData.detail || `HTTP ${response.status}`)
+  }
+
+  return response.blob()
 }
 
 /**

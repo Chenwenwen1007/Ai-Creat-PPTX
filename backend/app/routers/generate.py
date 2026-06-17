@@ -227,26 +227,48 @@ async def export_pptx(
     将生成的 SVG 导出为 PPTX
     """
     try:
+        from app.core.pipeline import PipelineStage
+        from app.core.pipeline import pipeline_manager
+
         project_dir = TEMP_DIR / project_id
         svg_dir = project_dir / "svg_output"
         exports_dir = project_dir / "exports"
         exports_dir.mkdir(exist_ok=True)
-        
+
         if not svg_dir.exists():
-            raise HTTPException(status_code=404, detail="未找到生成的 SVG 文件")
-        
+            raise HTTPException(status_code=404, detail="未找到生成的 SVG 文件，请先生成 PPT")
+
+        # 读取设计规范（用于提取标题）
+        spec_file = project_dir / "design_spec.md"
+        design_spec = ""
+        if spec_file.exists():
+            with open(spec_file, "r", encoding="utf-8") as f:
+                design_spec = f.read()
+
+        # 更新工作流状态
+        pipeline = pipeline_manager.get_pipeline(project_id)
+        if pipeline:
+            pipeline.update_stage(PipelineStage.EXPORT, "正在导出 PPTX")
+
         # 调用 svg_to_pptx 服务
-        from app.services.svg_to_pptx import convert_svgs_to_pptx
-        
+        from app.services.svg_to_pptx import convert_svgs_to_pptx, get_pptx_info
+
         pptx_path = exports_dir / f"{project_id}.pptx"
-        convert_svgs_to_pptx(str(svg_dir), str(pptx_path))
-        
+        convert_svgs_to_pptx(str(svg_dir), str(pptx_path), design_spec)
+
+        # 获取文件信息
+        info = get_pptx_info(str(pptx_path))
+
+        if pipeline:
+            pipeline.update_stage(PipelineStage.COMPLETED, "PPTX 导出完成")
+
         return FileResponse(
             path=str(pptx_path),
             filename=f"{project_id}.pptx",
-            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            headers={"X-PPTX-Info": str(info)}
         )
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PPTX 导出失败: {str(e)}")
 
