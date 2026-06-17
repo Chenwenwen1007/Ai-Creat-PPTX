@@ -19,108 +19,94 @@ TEMP_DIR = Path(__file__).parent.parent.parent / "temp"
 async def generate_design_spec(
     outline: str = Form(...),
     source: str = Form(...),
-    api_url: str = Form(...),
-    api_key: str = Form(...),
-    model: str = Form(...),
+    use_ai: str = Form("false"),
+    api_url: str = Form(""),
+    api_key: str = Form(""),
+    model: str = Form(""),
     project_id: str = Form(...)
 ):
     """
     Strategist 角色：根据大纲和源内容生成设计规范
+    
+    - use_ai: 是否使用 AI 生成（true/false），默认使用本地分析
     """
     try:
-        prompt = f"""你是 PPT 设计专家。请根据以下大纲和源内容，生成一份详细的设计规范。
-
-源内容摘要：
-{source[:2000]}
-
-大纲：
-{outline}
-
-请生成以下设计规范（YAML frontmatter + Markdown 格式）：
-
-```yaml
----
-title: "PPT标题"
-audience: "目标受众"
-pages: 10
-tone: "专业/活泼/正式/轻松"
-color_scheme:
-  primary: "#主色"
-  secondary: "#辅助色"
-  accent: "#强调色"
-  background: "#背景色"
-font_family:
-  heading: "标题字体"
-  body: "正文字体"
-layout_style: "标准/杂志/瑞士网格/新闻"
-image_style: "摄影/插画/图标/无"
----
-
-# 设计规范
-
-## 1. 视觉风格
-...
-
-## 2. 色彩系统
-...
-
-## 3. 字体层级
-...
-
-## 4. 页面布局建议
-...
-
-## 5. 图片使用策略
-...
-```
-
-请输出完整的设计规范文档。"""
-
-        import requests
-        response = requests.post(
-            f"{api_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": True
-            },
-            stream=True
-        )
+        from app.services.strategist import generate_design_spec as gen_spec, validate_design_spec
         
-        # 保存设计规范
+        # 保存项目目录
         project_dir = TEMP_DIR / project_id
         project_dir.mkdir(exist_ok=True)
         
-        spec_content = ""
+        if use_ai.lower() == "true" and api_url and api_key:
+            # AI 增强模式：使用本地分析 + AI 润色
+            from app.services.strategist import analyze_content, recommend_design, generate_prompt
+            
+            analysis = analyze_content(source, outline)
+            design = recommend_design(analysis)
+            prompt = generate_prompt(source, outline, analysis, design)
+            
+            import requests
+            response = requests.post(
+                f"{api_url}/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": True
+                },
+                stream=True
+            )
+            
+            spec_content = ""
+            
+            def stream_generator():
+                nonlocal spec_content
+                for line in response.iter_lines():
+                    if line:
+                        decoded = line.decode('utf-8')
+                        if decoded.startswith('data: '):
+                            data = decoded[6:]
+                            if data == '[DONE]':
+                                # 保存到文件
+                                spec_file = project_dir / "design_spec.md"
+                                with open(spec_file, "w", encoding="utf-8") as f:
+                                    f.write(spec_content)
+                                break
+                            try:
+                                json_data = json.loads(data)
+                                if 'choices' in json_data:
+                                    delta = json_data['choices'][0].get('delta', {})
+                                    if 'content' in delta:
+                                        spec_content += delta['content']
+                                        yield f"data: {json.dumps({'content': delta['content']})}\n\n"
+                            except:
+                                pass
+            
+            return StreamingResponse(
+                stream_generator(),
+                media_type="text/event-stream"
+            )
         
-        def stream_generator():
-            nonlocal spec_content
-            for line in response.iter_lines():
-                if line:
-                    decoded = line.decode('utf-8')
-                    if decoded.startswith('data: '):
-                        data = decoded[6:]
-                        if data == '[DONE]':
-                            # 保存到文件
-                            spec_file = project_dir / "design_spec.md"
-                            with open(spec_file, "w", encoding="utf-8") as f:
-                                f.write(spec_content)
-                            break
-                        try:
-                            json_data = json.loads(data)
-                            if 'choices' in json_data:
-                                delta = json_data['choices'][0].get('delta', {})
-                                if 'content' in delta:
-                                    spec_content += delta['content']
-                                    yield f"data: {json.dumps({'content': delta['content']})}\n\n"
-                        except:
-                            pass
-        
-        return StreamingResponse(
-            stream_generator(),
-            media_type="text/event-stream"
-        )
+        else:
+            # 本地分析模式：快速生成，不依赖 AI API
+            spec_content, analysis = gen_spec(source, outline)
+            
+            # 验证规范完整性
+            is_valid, errors = validate_design_spec(spec_content)
+            if not is_valid:
+                print(f"设计规范警告: {errors}")
+            
+            # 保存到文件
+            spec_file = project_dir / "design_spec.md"
+            with open(spec_file, "w", encoding="utf-8") as f:
+                f.write(spec_content)
+            
+            return {
+                "success": True,
+                "mode": "local",
+                "analysis": analysis,
+                "design_spec": spec_content
+            }
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"设计规范生成失败: {str(e)}")
@@ -159,45 +145,76 @@ async def generate_ppt(
 ):
     """
     Executor 角色：根据大纲和设计规范逐页生成 PPT
+    包含 SVG 质量检查流程
     """
     try:
+        from app.services.svg_checker import generate_quality_report
+        from app.core.pipeline import pipeline_manager
+
+        # 初始化工作流
+        pipeline = pipeline_manager.create_pipeline(project_id)
+        pipeline.update_stage(PipelineStage.EXECUTOR, "开始生成 PPT 页面")
+
         project_dir = TEMP_DIR / project_id
         svg_dir = project_dir / "svg_output"
         svg_dir.mkdir(exist_ok=True)
-        
+
         # 解析大纲获取页面列表
         pages = parse_outline_pages(outline)
         total_pages = len(pages)
-        
+
         async def stream_generator():
+            quality_reports = []
+
             for idx, page in enumerate(pages):
                 page_num = idx + 1
-                
+                pipeline.update_progress(
+                    page_num / total_pages,
+                    f"正在生成第 {page_num}/{total_pages} 页..."
+                )
+
                 # 发送进度
                 yield f"data: {json.dumps({'progress': page_num / total_pages, 'current_page': page_num, 'total_pages': total_pages, 'status': f'正在生成第 {page_num}/{total_pages} 页...'})}\n\n"
-                
+
                 # 生成该页 SVG
                 svg_content = await generate_page_svg(
                     page, design_spec, api_url, api_key, model
                 )
-                
+
+                # SVG 质量检查
+                yield f"data: {json.dumps({'progress': page_num / total_pages, 'current_page': page_num, 'status': f'正在检查第 {page_num} 页质量...'})}\n\n"
+
+                quality_report = generate_quality_report(page_num, svg_content, design_spec)
+                quality_reports.append(quality_report)
+
+                # 如果检查不通过，记录警告但不中断生成
+                if not quality_report['passed']:
+                    print(f"第 {page_num} 页质量警告: {quality_report['summary']}")
+
                 # 保存 SVG
                 svg_file = svg_dir / f"page_{page_num:02d}.svg"
                 with open(svg_file, "w", encoding="utf-8") as f:
                     f.write(svg_content)
-                
-                yield f"data: {json.dumps({'progress': page_num / total_pages, 'current_page': page_num, 'total_pages': total_pages, 'status': f'第 {page_num} 页完成', 'svg': svg_content[:500]})}\n\n"
-                
+
+                yield f"data: {json.dumps({'progress': page_num / total_pages, 'current_page': page_num, 'total_pages': total_pages, 'status': f'第 {page_num} 页完成', 'quality': quality_report['summary'], 'svg': svg_content[:500]})}\n\n"
+
                 await asyncio.sleep(0.1)
-            
-            # 生成完成
-            yield f"data: {json.dumps({'progress': 1.0, 'status': '全部页面生成完成', 'total_pages': total_pages})}\n\n"
-        
+
+            # 生成完成，保存质量报告
+            pipeline.update_stage(PipelineStage.QUALITY_CHECK, "质量检查完成")
+            report_file = project_dir / "quality_report.json"
+            with open(report_file, "w", encoding="utf-8") as f:
+                json.dump(quality_reports, f, ensure_ascii=False, indent=2)
+
+            # 统计总体质量
+            passed_pages = sum(1 for r in quality_reports if r['passed'])
+            yield f"data: {json.dumps({'progress': 1.0, 'status': f'全部页面生成完成（{passed_pages}/{total_pages} 页通过质量检查）', 'total_pages': total_pages, 'quality_summary': {'passed': passed_pages, 'total': total_pages}})}\n\n"
+
         return StreamingResponse(
             stream_generator(),
             media_type="text/event-stream"
         )
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PPT 生成失败: {str(e)}")
 

@@ -473,10 +473,10 @@ backend/app/templates/
 | 2.2 | 实现 Word/DOCX 转 Markdown | ✅ 已完成 | Phase 2 |
 | 2.3 | 实现 URL 网页转 Markdown | ✅ 已完成 | Phase 2 |
 | 2.4 | 前端文件上传组件 | ✅ 已完成 | Phase 2 |
-| 3.1 | 实现 Strategist（策划角色） | ⬜ 未完成 | Phase 3 |
-| 3.2 | 前端设计规范确认界面 | ⬜ 未完成 | Phase 3 |
-| 3.3 | 实现 Executor（SVG 生成） | ⬜ 未完成 | Phase 3 |
-| 3.4 | 实现 SVG 质量检查 | ⬜ 未完成 | Phase 3 |
+| 3.1 | 实现 Strategist（策划角色） | ✅ 已完成 | Phase 3 |
+| 3.2 | 前端设计规范确认界面 | ✅ 已完成 | Phase 3 |
+| 3.3 | 实现 Executor（SVG 生成） | ✅ 已完成 | Phase 3 |
+| 3.4 | 实现 SVG 质量检查 | ✅ 已完成 | Phase 3 |
 | 4.1 | 实现 SVG 转 PPTX（核心） | ⬜ 未完成 | Phase 4 |
 | 4.2 | 前端下载 PPTX 功能 | ⬜ 未完成 | Phase 4 |
 | 5.1 | 三级模板架构设计 | ⬜ 未完成 | Phase 5 |

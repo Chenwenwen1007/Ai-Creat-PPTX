@@ -15,6 +15,7 @@ import StepperWrapper from 'src/@core/styles/mui/stepper'
 
 import StepOneInputData from './StepOneInputData'
 import StepTwoThreeGenerateOutline from './StepTwoThreeGenerateOutline'
+import StepThreeConfirmDesign from './StepThreeConfirmDesign'
 import StepFourSelectTemplate from './StepFourSelectTemplate'
 import StepFiveGeneratePpt from './StepFiveGeneratePpt'
 
@@ -32,12 +33,16 @@ const steps = [
     subtitle: '编辑大纲'
   },
   {
+    title: '设计规范',
+    subtitle: '确认设计规范'
+  },
+  {
     title: '选择模板',
     subtitle: '选择模板'
   },
   {
-    title: '制作PTPX',
-    subtitle: '制作PTPX'
+    title: '制作PPTX',
+    subtitle: '制作PPTX'
   }
 ]
 
@@ -109,7 +114,7 @@ const StepperLinearWithValidation = () => {
             />
           )}
           {activeStep === 3 && (
-            <StepFourSelectTemplate
+            <StepThreeConfirmDesign
               activeStep={activeStep}
               setActiveStep={setActiveStep}
               inputData={inputData}
@@ -117,6 +122,14 @@ const StepperLinearWithValidation = () => {
             />
           )}
           {activeStep === 4 && (
+            <StepFourSelectTemplate
+              activeStep={activeStep}
+              setActiveStep={setActiveStep}
+              inputData={inputData}
+              setInputData={setInputData}
+            />
+          )}
+          {activeStep === 5 && (
             <StepFiveGeneratePpt
               activeStep={activeStep}
               setActiveStep={setActiveStep}
