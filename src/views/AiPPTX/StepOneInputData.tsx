@@ -1,5 +1,5 @@
 // ** React Imports
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useRef } from 'react'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'
@@ -9,6 +9,9 @@ import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import LinearProgress from '@mui/material/LinearProgress'
+import Alert from '@mui/material/Alert'
+import Paper from '@mui/material/Paper'
 import {
   Description, // 输入主题与要求
   CloudUpload, // 导入外部资料
@@ -21,6 +24,9 @@ import {
   PlayCircleFilled, // 立即生成
 } from "@mui/icons-material";
 
+// ** Python Backend API
+import { uploadFile, uploadUrl, checkPythonHealth } from 'src/api/pythonApi'
+
 
 const StepOneInputData = ({ setActiveStep, setInputData }: any) => {
   // ** States
@@ -32,19 +38,112 @@ const StepOneInputData = ({ setActiveStep, setInputData }: any) => {
   const [showMoreOptions, setShowMoreOptions] = useState(false); // 是否显示更多生成要求
   const [moreOptions, setMoreOptions] = useState({ moreRequirement: "", language: "zh-CN", outlineLength: "regular" }); // 更多生成要求的内容
 
+  // 文件上传状态
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadedMarkdown, setUploadedMarkdown] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // 处理选项切换
   const handleOptionChange = (option: any) => {
     setSelectedOption(option);
+    // 切换时清除之前的状态
+    setUploadError("");
+    setUploadedMarkdown("");
   };
 
   // 处理导入选项切换
   const handleImportOptionChange = (option: any) => {
     setImportOption(option);
+    setUploadError("");
   };
 
   // 处理更多生成要求的显示/隐藏
   const toggleMoreOptions = () => {
     setShowMoreOptions(!showMoreOptions);
+  };
+
+  /**
+   * 生成项目唯一标识
+   */
+  const generateProjectId = () => {
+    return 'ppt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  };
+
+  /**
+   * 处理文件上传
+   */
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    const allowedTypes = ['.pdf', '.docx', '.doc'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowedTypes.includes(fileExt)) {
+      setUploadError('仅支持 PDF 和 Word 文件');
+      return;
+    }
+
+    // 验证文件大小（50MB）
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('文件大小不能超过 50MB');
+      return;
+    }
+
+    setUploadLoading(true);
+    setUploadError("");
+    setUploadedMarkdown("");
+
+    try {
+      const projectId = generateProjectId();
+      const result = await uploadFile(file, projectId);
+
+      if (result.success && result.markdown) {
+        setUploadedMarkdown(result.markdown);
+        setUploadedFileName(file.name);
+        setInputText(result.markdown); // 将解析后的内容设置到输入文本
+      } else {
+        setUploadError('解析失败，请重试');
+      }
+    } catch (error: any) {
+      setUploadError(error.message || '上传失败，请检查后端服务是否运行');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  /**
+   * 处理 URL 解析
+   */
+  const handleUrlParse = async () => {
+    if (!inputText.trim() || !inputText.startsWith('http')) {
+      setUploadError('请输入有效的网页地址（以 http:// 或 https:// 开头）');
+      return;
+    }
+
+    setUploadLoading(true);
+    setUploadError("");
+    setUploadedMarkdown("");
+
+    try {
+      const projectId = generateProjectId();
+      const result = await uploadUrl(inputText, projectId);
+
+      if (result.success && result.markdown) {
+        setUploadedMarkdown(result.markdown);
+        setUploadedFileName(inputText);
+        // 将解析后的内容追加到输入文本
+        setInputText(result.markdown);
+      } else {
+        setUploadError('网页解析失败，请检查 URL 是否正确');
+      }
+    } catch (error: any) {
+      setUploadError(error.message || '解析失败，请检查后端服务是否运行');
+    } finally {
+      setUploadLoading(false);
+    }
   };
 
   // 处理立即生成按钮点击
@@ -145,17 +244,78 @@ const StepOneInputData = ({ setActiveStep, setInputData }: any) => {
             />
           )}
 
+          {importOption === "uploadFile" && (
+            <Box sx={{ mb: 2, mt: 2 }}>
+              <input
+                type="file"
+                accept=".pdf,.docx,.doc"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadLoading}
+                startIcon={<UploadFile />}
+                sx={{ py: 2, borderStyle: 'dashed', borderWidth: 2 }}
+              >
+                {uploadLoading ? '正在上传解析...' : '点击选择文件（PDF / Word）'}
+              </Button>
+
+              {uploadLoading && <LinearProgress sx={{ mt: 1 }} />}
+              {uploadError && <Alert severity="error" sx={{ mt: 1 }}>{uploadError}</Alert>}
+              {uploadedFileName && (
+                <Alert severity="success" sx={{ mt: 1 }}>
+                  已解析: {uploadedFileName}
+                </Alert>
+              )}
+            </Box>
+          )}
+
           {importOption === "inputUrl" && (
-            <TextField
-              fullWidth
-              label="请输入网页地址"
-              variant="outlined"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              sx={{ mb: 2, mt: 2 }}
-            />
+            <Box sx={{ mb: 2, mt: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="请输入网页地址"
+                  variant="outlined"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="https://..."
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleUrlParse}
+                  disabled={uploadLoading}
+                >
+                  解析
+                </Button>
+              </Box>
+
+              {uploadLoading && <LinearProgress sx={{ mt: 1 }} />}
+              {uploadError && <Alert severity="error" sx={{ mt: 1 }}>{uploadError}</Alert>}
+              {uploadedMarkdown && (
+                <Alert severity="success" sx={{ mt: 1 }}>
+                  网页解析成功！
+                </Alert>
+              )}
+            </Box>
           )}
         </>
+      )}
+
+      {/* 解析后的 Markdown 预览 */}
+      {uploadedMarkdown && (
+        <Paper variant="outlined" sx={{ p: 2, mb: 2, maxHeight: 300, overflow: 'auto' }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+            解析结果预览（前 1000 字符）：
+          </Typography>
+          <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+            {uploadedMarkdown.length > 1000 ? uploadedMarkdown.substring(0, 1000) + '...' : uploadedMarkdown}
+          </Typography>
+        </Paper>
       )}
 
       {/* 更多生成要求 */}

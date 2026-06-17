@@ -118,10 +118,10 @@ backend/
 
 ---
 
-### Phase 2: 源文件解析模块（预计 2-3 天）
+### Phase 2: 源文件解析模块 ✅ 已完成
 
 #### Task 2.1: 实现 PDF 转 Markdown
-**状态**: ⬜ 未完成
+**状态**: ✅ 已完成
 **做什么**: 参考 ppt-master 的 `pdf_to_md.py`，实现 PDF 文本/图片提取
 **怎么做**:
 1. 安装 `pdfplumber` 和 `PyMuPDF`
@@ -136,7 +136,7 @@ backend/
 ---
 
 #### Task 2.2: 实现 Word/DOCX 转 Markdown
-**状态**: ⬜ 未完成
+**状态**: ✅ 已完成
 **做什么**: 参考 ppt-master 的 `doc_to_md.py`，实现 DOCX 解析
 **怎么做**:
 1. 使用 `python-docx` 库读取 .docx 文件
@@ -151,7 +151,7 @@ backend/
 ---
 
 #### Task 2.3: 实现 URL 网页转 Markdown
-**状态**: ⬜ 未完成
+**状态**: ✅ 已完成
 **做什么**: 支持输入 URL，抓取网页内容转为 Markdown
 **怎么做**:
 1. 使用 `requests` + `beautifulsoup4` 抓取网页
@@ -164,7 +164,7 @@ backend/
 ---
 
 #### Task 2.4: 前端文件上传组件
-**状态**: ⬜ 未完成
+**状态**: ✅ 已完成
 **做什么**: 修改 StepOneInputData.tsx，支持上传 PDF/DOCX/URL
 **怎么做**:
 1. 添加 `<input type="file" accept=".pdf,.docx,.doc" />`
@@ -469,10 +469,10 @@ backend/app/templates/
 | 1.1 | 创建 Python 后端服务目录结构 | ✅ 已完成 | Phase 1 |
 | 1.2 | 配置 Python 虚拟环境与依赖 | ✅ 已完成 | Phase 1 |
 | 1.3 | 配置前端代理与跨域 | ✅ 已完成 | Phase 1 |
-| 2.1 | 实现 PDF 转 Markdown | ⬜ 未完成 | Phase 2 |
-| 2.2 | 实现 Word/DOCX 转 Markdown | ⬜ 未完成 | Phase 2 |
-| 2.3 | 实现 URL 网页转 Markdown | ⬜ 未完成 | Phase 2 |
-| 2.4 | 前端文件上传组件 | ⬜ 未完成 | Phase 2 |
+| 2.1 | 实现 PDF 转 Markdown | ✅ 已完成 | Phase 2 |
+| 2.2 | 实现 Word/DOCX 转 Markdown | ✅ 已完成 | Phase 2 |
+| 2.3 | 实现 URL 网页转 Markdown | ✅ 已完成 | Phase 2 |
+| 2.4 | 前端文件上传组件 | ✅ 已完成 | Phase 2 |
 | 3.1 | 实现 Strategist（策划角色） | ⬜ 未完成 | Phase 3 |
 | 3.2 | 前端设计规范确认界面 | ⬜ 未完成 | Phase 3 |
 | 3.3 | 实现 Executor（SVG 生成） | ⬜ 未完成 | Phase 3 |
