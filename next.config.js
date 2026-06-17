@@ -20,6 +20,15 @@ module.exports = withTM({
   experimental: {
     esmExternals: false
   },
+  // 开发环境代理配置 - 将 Python 后端 API 请求转发到 FastAPI 服务
+  async rewrites() {
+    return [
+      {
+        source: '/api/python/:path*',
+        destination: 'http://127.0.0.1:8002/api/:path*'
+      }
+    ]
+  },
   webpack: config => {
     config.resolve.alias = {
       ...config.resolve.alias,

@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 api/tools/update_core.html
+
+# python
+__pycache__/
